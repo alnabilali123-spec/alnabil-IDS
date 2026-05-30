@@ -1,0 +1,12 @@
+[
+  {
+    "id": "f458c24b",
+    "source_ip": "192.168.137.27",
+    "protocol": "TCP",
+    "port": "80",
+    "action": "BLOCK",
+    "reason": "Manual",
+    "created_at": 1778620768.3160932,
+    "windows_firewall_added": true
+  }
+]

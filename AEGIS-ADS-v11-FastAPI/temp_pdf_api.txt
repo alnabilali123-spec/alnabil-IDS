@@ -1,0 +1,149 @@
+﻿@app.post("/api/reports/generate")
+async def api_report_generate(data: dict = None):
+    """توليد تقرير PDF - نسخة محسنة"""
+    import os
+    import tempfile
+    from datetime import datetime
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    import uuid
+    
+    try:
+        os.makedirs("reports", exist_ok=True)
+        
+        # إنشاء اسم ملف فريد
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"reports/AEGIS_Report_{timestamp}.pdf"
+        
+        # إنشاء PDF
+        doc = SimpleDocTemplate(filename, pagesize=A4, 
+                                rightMargin=72, leftMargin=72,
+                                topMargin=72, bottomMargin=72)
+        
+        styles = getSampleStyleSheet()
+        story = []
+        
+        # عنوان رئيسي
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=28,
+            textColor=colors.HexColor('#1a237e'),
+            alignment=TA_CENTER,
+            spaceAfter=30,
+            fontName='Helvetica-Bold'
+        )
+        story.append(Paragraph("AEGIS-ADS", title_style))
+        story.append(Paragraph("Security Report", title_style))
+        story.append(Spacer(1, 0.2 * inch))
+        
+        # خط فاصل
+        story.append(Paragraph("<hr/>", styles['Normal']))
+        story.append(Spacer(1, 0.2 * inch))
+        
+        # معلومات التقرير
+        info_style = ParagraphStyle(
+            'Info',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=colors.grey,
+            alignment=TA_CENTER
+        )
+        story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", info_style))
+        story.append(Paragraph("System: AEGIS-ADS v11.0 (X-Sentry AI)", info_style))
+        story.append(Paragraph("Developer: Mohammed Bilal", info_style))
+        story.append(Spacer(1, 0.3 * inch))
+        
+        # إحصائيات سريعة
+        story.append(Paragraph("<b>Executive Summary</b>", styles['Heading2']))
+        story.append(Spacer(1, 0.1 * inch))
+        
+        stats_data = [
+            ["Total Packets", str(packet_count)],
+            ["Total Detections", str(len(detections))],
+            ["Blocked IPs", str(len([a for a in alerts if a.get('action') == 'Blocked']))],
+            ["Active Alerts", str(len(alerts))]
+        ]
+        
+        stats_table = Table(stats_data, colWidths=[200, 100])
+        stats_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a237e')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f5f5f5')),
+        ]))
+        story.append(stats_table)
+        story.append(Spacer(1, 0.3 * inch))
+        
+        # جدول التهديدات
+        story.append(Paragraph("<b>Threats Detected</b>", styles['Heading2']))
+        story.append(Spacer(1, 0.1 * inch))
+        
+        if alerts:
+            # جدول التهديدات
+            threat_data = [["#", "Time", "Attack", "Source IP", "Confidence", "Action"]]
+            for i, a in enumerate(alerts[:30], 1):
+                threat_data.append([
+                    str(i),
+                    a.get('time', '')[:19] if a.get('time') else 'N/A',
+                    a.get('attack', 'Unknown'),
+                    a.get('src', '?'),
+                    f"{a.get('confidence', 0)}%",
+                    a.get('action', 'Logged')
+                ])
+            
+            threat_table = Table(threat_data, colWidths=[30, 80, 100, 100, 60, 60])
+            threat_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d32f2f')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#fafafa')),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            story.append(threat_table)
+        else:
+            story.append(Paragraph("✓ No threats detected during this period.", styles['Normal']))
+        
+        story.append(Spacer(1, 0.5 * inch))
+        
+        # توقيع المطور
+        story.append(Paragraph("<hr/>", styles['Normal']))
+        story.append(Spacer(1, 0.1 * inch))
+        
+        signature_style = ParagraphStyle(
+            'Signature',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=colors.HexColor('#4a148c'),
+            alignment=TA_CENTER
+        )
+        story.append(Paragraph("___________________________________", signature_style))
+        story.append(Paragraph("Mohammed Bilal - Lead Developer", signature_style))
+        story.append(Paragraph("AEGIS-ADS X-Sentry AI System", signature_style))
+        story.append(Paragraph("© 2026 AEGIS-ADS. All rights reserved.", signature_style))
+        
+        # بناء PDF
+        doc.build(story)
+        
+        # التحقق من وجود الملف
+        if os.path.exists(filename) and os.path.getsize(filename) > 0:
+            logger.info(f"✅ PDF generated: {filename} ({os.path.getsize(filename)} bytes)")
+            return {"status": "generated", "file": filename, "filename": os.path.basename(filename)}
+        else:
+            return {"status": "failed", "error": "PDF file not created"}
+            
+    except Exception as e:
+        logger.error(f"PDF generation error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"status": "failed", "error": str(e)}

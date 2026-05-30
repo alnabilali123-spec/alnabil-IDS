@@ -1,0 +1,11 @@
+﻿# إضافة هذه الدالة إلى database/db_manager.py
+def delete_firewall_rule_by_ip(self, ip: str) -> bool:
+    """حذف قاعدة جدار الحماية حسب IP"""
+    try:
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM firewall_rules WHERE src_ip = ?", (ip,))
+        self.conn.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        logger.error(f"Delete rule error: {e}")
+        return False
