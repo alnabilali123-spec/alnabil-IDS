@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS-ADS v11.0 | Login</title>
+    <style>
+        :root {
+            --bg: #0a0e14;
+            --card: #12171f;
+            --border: #2a3a4a;
+            --text: #e0e0e0;
+            --muted: #9baec8;
+            --blue: #2979ff;
+            --red: #ff5252;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; color: var(--text);
+            background-image: radial-gradient(ellipse at center, #1a2230 0%, #0a0e14 70%);
+        }
+        .login-container {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 45px; width: 430px;
+            box-shadow: 0 0 60px rgba(41,121,255,0.08);
+        }
+        .logo { text-align: center; margin-bottom: 35px; }
+        .logo .icon { font-size: 55px; margin-bottom: 10px; }
+        .logo h1 { color: var(--blue); font-size: 26px; font-weight: 700; }
+        .logo p { color: var(--muted); font-size: 12px; margin-top: 5px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; color: var(--muted); font-size: 11px;
+            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%; padding: 14px 16px; background: #1a2230;
+            border: 1px solid var(--border); border-radius: 8px;
+            color: #fff; font-size: 14px; transition: all 0.3s;
+        }
+        .form-group input:focus { outline: none; border-color: var(--blue); }
+        .btn-login {
+            width: 100%; padding: 15px; background: var(--blue);
+            color: white; border: none; border-radius: 8px; font-size: 15px;
+            font-weight: 600; cursor: pointer; transition: all 0.3s; margin-top: 10px;
+        }
+        .btn-login:hover { background: #448aff; box-shadow: 0 0 25px rgba(41,121,255,0.3); }
+        .error { color: var(--red); text-align: center; margin-top: 15px; font-size: 13px; display: none; }
+        .info { text-align: center; margin-top: 25px; color: #555; font-size: 11px; }
+        .footer { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); color: #444; font-size: 10px; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <div class="icon">🛡️</div>
+            <h1>AEGIS-ADS v11.0</h1>
+            <p>X-Sentry AI | Intelligent Defense System</p>
+        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="Enter username" value="admin" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter password" value="2005">
+            </div>
+            <button type="submit" class="btn-login">🔐 Authenticate</button>
+            <div class="error" id="errorMsg">Invalid credentials. Please try again.</div>
+        </form>
+        <div class="info">Default credentials: admin / 2005</div>
+        <div class="footer">University of Ibb - Computer & IT Center © 2026</div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!username || !password) {
+                document.getElementById('errorMsg').style.display = 'block';
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('username', data.username);
+                    localStorage.setItem('role', data.role);
+                    window.location.href = '/dashboard';
+                } else {
+                    document.getElementById('errorMsg').style.display = 'block';
+                }
+            } catch (err) {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,233 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>AEGIS-ADS | Firewall</title>
+<style>:root{--bg:#0a0e14;--card:#12171f;--border:#2a3a4a;--text:#e0e0e0;--muted:#9baec8;--blue:#2979ff;--red:#ff5252;--green:#4caf50;--purple:#7c4dff}
+*{margin:0;padding:0;box-sizing:border-box}body{background:var(--bg);font-family:'Segoe UI',sans-serif;color:var(--text);display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--card);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.sidebar-header{padding:20px;text-align:center;border-bottom:1px solid var(--border)}
+.sidebar-nav a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--muted);text-decoration:none;font-size:13px;border-left:3px solid transparent}
+.sidebar-nav a:hover,.sidebar-nav a.active{background:#1a2230;color:#fff;border-left-color:var(--blue)}
+.main{margin-left:250px;flex:1;padding:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px}
+.card h3{color:var(--muted);font-size:12px;text-transform:uppercase;margin-bottom:15px}
+.btn{padding:10px 18px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;margin-right:8px;transition:all 0.2s}
+.btn:hover{opacity:0.9}.btn-blue{background:var(--blue);color:#fff}.btn-red{background:var(--red);color:#fff}.btn-purple{background:var(--purple);color:#fff}.btn-green{background:var(--green);color:#fff}
+input,select{padding:10px 14px;background:#1a2230;border:1px solid var(--border);border-radius:6px;color:#fff;font-size:12px;margin-right:8px;margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:10px;background:#1a2230;color:var(--muted);font-size:10px;text-transform:uppercase}
+td{padding:10px;border-top:1px solid var(--border)}
+.alert{color:var(--green);padding:10px;background:rgba(76,175,80,0.1);border-radius:6px;margin:10px 0;display:none}
+.shield-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase;margin-left:5px}
+.shield-badge.active{background:rgba(124,77,255,0.2);color:var(--purple);border:1px solid var(--purple)}
+</style></head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-header"><h2>🛡️ AEGIS-ADS</h2><span style="color:var(--muted);font-size:10px">v11.0</span></div>
+<nav class="sidebar-nav">
+<a href="/dashboard">📊 Dashboard</a><a href="/firewall" class="active">🛡️ Firewall</a><a href="/logs">📋 Logs</a>
+<a href="/models">🤖 AI Models</a><a href="/devices">🌐 Devices</a><a href="/pcap">📁 PCAP</a>
+<a href="/admin">👥 Users</a><a href="/settings">⚙️ Settings</a><a href="/reports">📄 Reports</a>
+<a href="/about">ℹ️ About</a><a href="/" onclick="localStorage.clear()" style="color:var(--red)">🚪 Logout</a>
+</nav></aside>
+<main class="main">
+<h1>🛡️ Firewall Control v4.2 <span class="shield-badge active">⚡ KERNEL IPS</span></h1>
+<small style="color:var(--muted)">Network Ingress/Egress Filtering</small>
+
+<div id="msg"></div>
+
+<div class="card" style="margin-top:20px">
+<h3>⚡ Quick Rule Config</h3>
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+<input type="text" id="srcIP" placeholder="Source IP (e.g. 192.168.137.153)" style="width:220px">
+<select id="protocol"><option>TCP</option><option>UDP</option><option>ICMP</option><option>ALL</option></select>
+<input type="text" id="port" placeholder="Port (e.g. 80)" style="width:100px">
+<select id="action"><option>Block</option><option>Allow</option></select>
+<input type="text" id="reason" placeholder="Reason" style="width:150px">
+<button class="btn btn-blue" onclick="addRule()">🛡️ Deploy Filter</button>
+<button class="btn btn-purple" onclick="panicMode()">🚨 PANIC</button>
+</div>
+<label style="font-size:11px;color:var(--muted);margin-top:8px"><input type="checkbox" id="logRule" checked> Log all rule matches</label>
+</div>
+
+<div class="card">
+<h3>📋 Active Firewall Rules (<span id="ruleCount">0</span>)</h3>
+<table>
+<thead><tr><th>ID</th><th>Rule Name</th><th>Source</th><th>Proto</th><th>Port</th><th>Action</th><th>Reason</th><th colspan="2">Actions</th></tr></thead>
+<tbody id="rulesTable"><tr><td colspan="9" style="text-align:center;color:var(--muted)">Loading...</td></tr></tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>🌐 Connected Devices (Add to Firewall)</h3>
+<table>
+<thead><tr><th>IP Address</th><th>MAC</th><th>Vendor</th><th colspan="2">Actions</th></tr></thead>
+<tbody id="devicesForRules"><tr><td colspan="5" style="text-align:center;color:var(--muted)">Loading...</td></tr></tbody>
+</table>
+</div>
+</main>
+
+<script>
+// ========================
+// 1. جلب القواعد (مع إظهار زر Whitelist)
+// ========================
+async function loadRules(){
+    try{
+        const r=await fetch('/api/firewall/rules'); const d=await r.json()
+        document.getElementById('ruleCount').textContent=d.count
+        if(!d.rules || d.rules.length===0){
+            document.getElementById('rulesTable').innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted)">No rules yet</td></tr>'
+            return
+        }
+        let html=''
+        for(const rule of d.rules){
+            const srcIp = rule.source || rule.src_ip || rule.ip || '*'
+            html+=`
+                <tr>
+                    <td>${rule.id || '-'}</td>
+                    <td>${rule.name || rule.rule_name || 'BLOCK_'+(srcIp)}</td>
+                    <td>${srcIp}</td>
+                    <td>${rule.protocol || 'ALL'}</td>
+                    <td>${rule.port || '*'}</td>
+                    <td style="color:${rule.action=='Block'?'var(--red)':'var(--green)'}">${rule.action || 'BLOCK'}</td>
+                    <td>${rule.reason || '-'}</td>
+                    <td><button class="btn btn-green" style="padding:4px 10px;font-size:10px" onclick="whitelistAndUnblock('${srcIp}')">✅ Whitelist</button></td>
+                    <td><button class="btn btn-red" style="padding:4px 10px;font-size:10px" onclick="deleteRuleById('${rule.id}','${srcIp}')">X Delete</button></td>
+                </tr>
+            `
+        }
+        document.getElementById('rulesTable').innerHTML=html
+    }catch(e){console.error(e)}
+}
+
+// ========================
+// 2. حذف قاعدة (بواسطة ID أو IP)
+// ========================
+async function deleteRuleById(ruleId, ip){
+    if(!ruleId && !ip) return
+    if(confirm(`Are you sure you want to remove the rule for ${ip}?`)){
+        let url = ruleId ? `/api/firewall/rules/${ruleId}` : `/api/firewall/rules/ip/${ip}`
+        await fetch(url,{method:'DELETE'})
+        loadRules()
+        loadDevices()
+        showMessage(`✅ Rule for ${ip} removed.`)
+    }
+}
+
+// ========================
+// 3. وظيفة فك الحظر + إضافة إلى القائمة البيضاء (Whitelist)
+// ========================
+async function whitelistAndUnblock(ip){
+    if(!ip || ip==='*'){ showMessage('Invalid IP','error'); return}
+    if(!confirm(`Whitelist and unblock ${ip}? This IP will never be blocked again.`)) return
+    try{
+        // أولاً: إضافة إلى القائمة البيضاء
+        const resWhitelist = await fetch('/api/whitelist/add',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({ip:ip})
+        })
+        const dataWhitelist = await resWhitelist.json()
+        if(!dataWhitelist.status==='success'){
+            showMessage(`Failed to add ${ip} to whitelist`,'error')
+            return
+        }
+        // ثانياً: حذف أي قواعد جدار ناري خاصة بهذا الـ IP
+        await fetch(`/api/firewall/rules/ip/${ip}`,{method:'DELETE'})
+        showMessage(`✅ ${ip} has been whitelisted and unblocked.`)
+        // تحديث الجداول
+        loadRules()
+        loadDevices()
+    }catch(e){
+        console.error(e)
+        showMessage(`Error: ${e.message}`,'error')
+    }
+}
+
+// ========================
+// 4. إضافة قاعدة جديدة (حظر / السماح)
+// ========================
+async function addRule(){
+    const rule={
+        rule_name:'Manual_'+Date.now(),
+        src_ip:document.getElementById('srcIP').value||'0.0.0.0/0',
+        protocol:document.getElementById('protocol').value,
+        port:document.getElementById('port').value||'80',
+        action:document.getElementById('action').value,
+        reason:document.getElementById('reason').value||'Manual'
+    }
+    const r=await fetch('/api/firewall/rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rule)})
+    if(r.ok){
+        const d=await r.json()
+        showMessage(`✅ Rule deployed! [Kernel: ${d.result?.kernel||d.kernel||false}]`)
+        loadRules()
+    }else showMessage('❌ Failed to deploy rule','error')
+}
+
+// حذف قديم (للتوافق مع deleteRule الموجود)
+async function deleteRule(id){ await deleteRuleById(id) }
+
+// ========================
+// 5. وضع الطوارئ (Panic)
+// ========================
+async function panicMode(){
+    if(confirm('🚨 PANIC: Block ALL hotspot traffic?')){
+        await fetch('/api/panic',{method:'POST'})
+        alert('PANIC activated! All hotspot traffic blocked.')
+        loadRules()
+    }
+}
+
+// ========================
+// 6. جلب الأجهزة المتصلة (مع إضافة زر Whitelist)
+// ========================
+async function loadDevices(){
+    try{
+        const r=await fetch('/api/devices'); const d=await r.json()
+        if(!d.devices || d.devices.length===0){
+            document.getElementById('devicesForRules').innerHTML='<tr><td colspan="5" style="text-align:center">No devices</td></tr>'
+            return
+        }
+        let html=''
+        for(const dev of d.devices.slice(0,15)){
+            const ip = dev.ip_address || dev.ip
+            if(!ip) continue
+            html+=`
+                <tr>
+                    <td>${ip}</td>
+                    <td style="font-family:monospace;font-size:10px">${dev.mac_address||'N/A'}</td>
+                    <td>${dev.vendor||'Unknown'}</td>
+                    <td><button class="btn btn-green" style="padding:4px 10px;font-size:10px" onclick="whitelistAndUnblock('${ip}')">✅ Whitelist</button></td>
+                    <td><button class="btn btn-red" style="padding:4px 10px;font-size:10px" onclick="quickBlock('${ip}')">Block</button></td>
+                </tr>
+            `
+        }
+        document.getElementById('devicesForRules').innerHTML=html
+    }catch(e){console.error(e)}
+}
+
+// ========================
+// 7. حظر سريع من الأجهزة
+// ========================
+function quickBlock(ip){
+    document.getElementById('srcIP').value=ip
+    document.getElementById('reason').value='Blocked from devices list'
+    addRule()
+}
+
+// ========================
+// 8. عرض رسائل مؤقتة
+// ========================
+function showMessage(msg, type='success'){
+    const div=document.getElementById('msg')
+    div.innerHTML=`<div class="alert" style="display:block;color:${type==='error'?'var(--red)':'var(--green)'}">${msg}</div>`
+    setTimeout(()=>div.innerHTML='',4000)
+}
+
+// ========================
+// 9. تشغيل التحديثات الدورية
+// ========================
+document.addEventListener('DOMContentLoaded',()=>{loadRules(); loadDevices()})
+setInterval(()=>{loadRules(); loadDevices()}, 5000)
+</script>
+</body>
+</html>

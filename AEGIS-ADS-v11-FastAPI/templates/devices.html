@@ -1,0 +1,177 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>AEGIS-ADS | Capture & Devices</title>
+<style>:root{--bg:#0a0e14;--card:#12171f;--border:#2a3a4a;--text:#e0e0e0;--muted:#9baec8;--blue:#2979ff;--red:#ff5252;--green:#4caf50;--orange:#ff9800;--purple:#7c4dff;}
+*{margin:0;padding:0;box-sizing:border-box;}body{background:var(--bg);font-family:'Segoe UI',sans-serif;color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:250px;background:var(--card);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar-header{padding:20px;text-align:center;border-bottom:1px solid var(--border);}
+.sidebar-nav a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--muted);text-decoration:none;font-size:13px;border-left:3px solid transparent;}
+.sidebar-nav a:hover,.sidebar-nav a.active{background:#1a2230;color:#fff;border-left-color:var(--blue);}
+.main{margin-left:250px;flex:1;padding:20px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px;}
+.card h3{color:var(--muted);font-size:12px;text-transform:uppercase;margin-bottom:12px;}
+.btn{padding:10px 18px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;margin-right:8px;margin-bottom:8px;}
+.btn-green{background:var(--green);color:#fff;}.btn-red{background:var(--red);color:#fff;}.btn-blue{background:var(--blue);color:#fff;}.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;}
+.badge-running{background:rgba(76,175,80,0.2);color:var(--green);border:1px solid var(--green);}
+.badge-stopped{background:rgba(255,82,82,0.2);color:var(--red);border:1px solid var(--red);}
+select,input{padding:10px 14px;background:#1a2230;border:1px solid var(--border);border-radius:6px;color:#fff;font-size:12px;margin-right:8px;margin-bottom:8px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;padding:10px 12px;background:#1a2230;color:var(--muted);font-size:10px;text-transform:uppercase;}
+td{padding:10px 12px;border-top:1px solid var(--border);}
+.alert{padding:12px 18px;border-radius:8px;margin:15px 0;font-size:13px;}
+.alert-success{background:rgba(76,175,80,0.15);border:1px solid var(--green);color:var(--green);}
+.alert-error{background:rgba(255,82,82,0.15);border:1px solid var(--red);color:var(--red);}
+.alert-info{background:rgba(41,121,255,0.15);border:1px solid var(--blue);color:var(--blue);}
+</style></head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-header"><h2>🛡️ AEGIS-ADS</h2><span style="color:var(--muted);font-size:10px;">v11.0</span></div>
+<nav class="sidebar-nav">
+<a href="/dashboard">📊 Dashboard</a><a href="/firewall">🛡️ Firewall</a><a href="/logs">📋 Logs</a>
+<a href="/models">🤖 AI Models</a><a href="/devices" class="active">🌐 Capture & Devices</a><a href="/pcap">📁 PCAP</a>
+<a href="/admin">👥 Users</a><a href="/settings">⚙️ Settings</a><a href="/reports">📄 Reports</a>
+<a href="/about">ℹ️ About</a><a href="/" onclick="localStorage.clear()" style="color:var(--red);">🚪 Logout</a>
+</nav></aside>
+<main class="main">
+<h1>🌐 Network Capture & Device Scanner</h1>
+<div id="captureAlert"></div>
+
+<div class="card">
+<h3>📡 Packet Capture Control</h3>
+<div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;">
+    <span>Interface:</span>
+    <select id="captureInterface" style="min-width:300px;"></select>
+    <button class="btn btn-green" id="btnStart" onclick="startCapture()">▶️ Start Capture</button>
+    <button class="btn btn-red" id="btnStop" onclick="stopCapture()" disabled>⏹️ Stop</button>
+    <span>Status:</span>
+    <span class="badge badge-stopped" id="captureStatus">STOPPED</span>
+    <span style="margin-left:15px;">Packets: <b id="pktCount" style="color:var(--blue);">0</b></span>
+</div>
+</div>
+
+<div class="card">
+<h3>🔍 Network Device Scanner</h3>
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <input type="text" id="scanSubnet" value="192.168.137.0/24" style="width:180px;">
+    <button class="btn btn-blue" onclick="scanDevices()">🔍 Scan Network</button>
+    <button class="btn btn-outline" onclick="loadDevices()">🔄 Refresh</button>
+    <span id="scanStatus" style="color:var(--muted);">Ready</span>
+</div>
+</div>
+
+<div class="card">
+<h3>📋 Discovered Devices <span id="totalDevices" style="color:var(--muted);"></span></h3>
+<table><thead><tr><th>IP Address</th><th>MAC Address</th><th>Vendor</th><th>Hostname</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody id="devicesTable"></tbody></table>
+</div>
+</main>
+
+<script>
+let currentInterface = null;
+
+async function loadCaptureStatus(){
+    try{
+        const r = await fetch('/api/capture/status'); const d = await r.json();
+        document.getElementById('pktCount').textContent = d.packets_processed?.toLocaleString()||0;
+        const s = document.getElementById('captureStatus');
+        if(d.capture_running){
+            s.textContent='RUNNING'; s.className='badge badge-running';
+            document.getElementById('btnStart').disabled=true;
+            document.getElementById('btnStop').disabled=false;
+        }else{
+            s.textContent='STOPPED'; s.className='badge badge-stopped';
+            document.getElementById('btnStart').disabled=false;
+            document.getElementById('btnStop').disabled=true;
+        }
+        
+        const sel = document.getElementById('captureInterface');
+        // Build interface list - show name AND IP
+        sel.innerHTML = d.available_interfaces?.map(i => {
+            const label = `${i.name} (${i.ip})`;
+            return `<option value="${i.name}">${label}</option>`;
+        }).join('') || '<option>No interfaces found</option>';
+        
+        // Auto-select 192.168.137.x interface
+        for(let opt of sel.options){
+            if(opt.text.includes('192.168.137')){
+                opt.selected = true;
+                break;
+            }
+        }
+    }catch(e){console.error(e);}
+}
+
+async function startCapture(){
+    const sel = document.getElementById('captureInterface');
+    const iface = sel.value;
+    const alert = document.getElementById('captureAlert');
+    
+    alert.innerHTML='<div class="alert alert-info">⏳ Starting capture on: '+iface+'...</div>';
+    
+    try{
+        const r = await fetch('/api/capture/start',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({interface: iface, mode: 'monitor'})
+        });
+        if(r.ok){
+            const d = await r.json();
+            alert.innerHTML='<div class="alert alert-success">✅ Capture started on '+d.interface+'</div>';
+            loadCaptureStatus();
+        }else{
+            const e = await r.json();
+            alert.innerHTML='<div class="alert alert-error">❌ '+e.detail+'</div>';
+        }
+    }catch(e){
+        alert.innerHTML='<div class="alert alert-error">❌ Error: '+e.message+'</div>';
+    }
+}
+
+async function stopCapture(){
+    await fetch('/api/capture/stop',{method:'POST'});
+    document.getElementById('captureAlert').innerHTML='';
+    loadCaptureStatus();
+}
+
+async function loadDevices(){
+    try{
+        const r = await fetch('/api/devices'); const d = await r.json();
+        document.getElementById('totalDevices').textContent = '('+d.devices.length+' devices)';
+        document.getElementById('devicesTable').innerHTML = d.devices.map(dev=>`
+            <tr>
+                <td style="color:var(--blue);">${dev.ip_address}</td>
+                <td style="font-family:monospace;">${dev.mac_address||'Unknown'}</td>
+                <td>${dev.vendor||'Unknown'}</td><td>${dev.hostname||'Unknown'}</td>
+                <td><span class="badge badge-running">Active</span></td>
+                <td><button class="btn btn-red" style="padding:4px 10px;font-size:10px;">Block</button></td>
+            </tr>
+        `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px;">No devices found. Click Scan Network.</td></tr>';
+    }catch(e){}
+}
+
+async function scanDevices(){
+    document.getElementById('scanStatus').textContent='Scanning...';
+    document.getElementById('scanStatus').style.color='var(--orange)';
+    const subnet = document.getElementById('scanSubnet').value;
+    try{
+        const r = await fetch('/api/devices/scan',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({subnet:subnet})
+        });
+        const d = await r.json();
+        document.getElementById('scanStatus').textContent='✅ Found '+d.count+' devices';
+        document.getElementById('scanStatus').style.color='var(--green)';
+        loadDevices();
+    }catch(e){
+        document.getElementById('scanStatus').textContent='❌ Failed';
+        document.getElementById('scanStatus').style.color='var(--red)';
+    }
+}
+
+setInterval(loadCaptureStatus,3000);
+document.addEventListener('DOMContentLoaded',()=>{loadCaptureStatus();loadDevices();});
+</script>
+</body>
+</html>
+

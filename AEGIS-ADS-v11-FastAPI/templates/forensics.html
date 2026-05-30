@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>AEGIS-ADS | Forensics</title>
+<style>:root{--bg:#0a0e14;--card:#12171f;--border:#2a3a4a;--text:#e0e0e0;--muted:#9baec8;--blue:#2979ff;--red:#ff5252;--green:#4caf50;}
+*{margin:0;padding:0;box-sizing:border-box;}body{background:var(--bg);font-family:'Segoe UI',sans-serif;color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:250px;background:var(--card);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;}
+.sidebar-header{padding:20px;text-align:center;border-bottom:1px solid var(--border);}
+.sidebar-nav a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--muted);text-decoration:none;font-size:13px;border-left:3px solid transparent;}
+.sidebar-nav a:hover,.sidebar-nav a.active{background:#1a2230;color:#fff;border-left-color:var(--blue);}
+.main{margin-left:250px;flex:1;padding:20px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px;}
+.btn{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:12px;}
+.btn-red{background:var(--red);color:#fff;}
+</style></head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-header"><h2>🛡️ AEGIS-ADS</h2></div>
+<nav class="sidebar-nav">
+<a href="/dashboard">📊 Dashboard</a><a href="/firewall">🛡️ Firewall</a><a href="/logs">📋 Logs</a>
+<a href="/models">🤖 AI Models</a><a href="/devices">🌐 Devices</a><a href="/pcap">📁 PCAP</a>
+<a href="/admin">👥 Users</a><a href="/settings">⚙️ Settings</a><a href="/reports">📄 Reports</a>
+<a href="/forensics" class="active">🔬 Forensics</a><a href="/about">ℹ️ About</a>
+<a href="/" onclick="localStorage.clear()" style="color:var(--red);">🚪 Logout</a>
+</nav></aside>
+<main class="main">
+<h1>🔬 Digital Forensics Investigation</h1>
+<div class="card" style="margin-top:20px;">
+<h3 style="color:var(--muted);margin-bottom:10px;">Case: X-DET-99201-B</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+<div><b>Source IP:</b> 103.45.211.19</div><div><b>Reputation:</b> <span style="color:var(--red);">Malicious (88/100)</span></div>
+<div><b>Location:</b> Beijing, China</div><div><b>ISP:</b> Cloudflare, Inc.</div>
+</div>
+<h4 style="color:var(--blue);margin-top:20px;">Inference Chain:</h4>
+<div style="margin:10px 0;"><b>Layer 1:</b> Random Forest ████████░░ 30% - Anomalies detected</div>
+<div style="margin:10px 0;"><b>Layer 2:</b> XGBoost ██████████████████░ 94% - C2 Beaconing</div>
+<div style="margin:10px 0;"><b>Layer 3:</b> Ensemble ████████████████████ 91.2% - <span style="color:var(--red);">BLOCKED</span></div>
+<button class="btn btn-red" style="margin-top:15px;">🚫 Add to Permanent Blocklist</button>
+</div>
+</main>
+</body>
+</html>
+

@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>AEGIS-ADS | Logs</title>
+<style>:root{--bg:#0a0e14;--card:#12171f;--border:#2a3a4a;--text:#e0e0e0;--muted:#9baec8;--blue:#2979ff;--red:#ff5252;--green:#4caf50;--orange:#ff9800}
+*{margin:0;padding:0;box-sizing:border-box}body{background:var(--bg);font-family:'Segoe UI',sans-serif;color:var(--text);display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--card);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.sidebar-header{padding:20px;text-align:center;border-bottom:1px solid var(--border)}
+.sidebar-nav a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--muted);text-decoration:none;font-size:13px;border-left:3px solid transparent}
+.sidebar-nav a:hover,.sidebar-nav a.active{background:#1a2230;color:#fff;border-left-color:var(--blue)}
+.main{margin-left:250px;flex:1;padding:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px}
+.card h3{color:var(--muted);font-size:12px;text-transform:uppercase;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;padding:8px 10px;background:#1a2230;color:var(--muted);font-size:9px;text-transform:uppercase}
+td{padding:8px 10px;border-top:1px solid var(--border)}
+tr:hover td{background:rgba(41,121,255,0.03)}
+input,select{padding:8px 12px;background:#1a2230;border:1px solid var(--border);border-radius:6px;color:#fff;font-size:11px;margin-right:8px}
+.btn{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
+.btn-blue{background:var(--blue);color:#fff}.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.sev-Critical{color:var(--red);font-weight:bold}.sev-High{color:var(--orange)}.sev-Medium{color:#ffeb3b}.sev-Low{color:var(--green)}
+</style></head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-header"><h2>🛡️ AEGIS-ADS</h2><span style="color:var(--muted);font-size:10px">v11.0</span></div>
+<nav class="sidebar-nav">
+<a href="/dashboard">📊 Dashboard</a><a href="/firewall">🛡️ Firewall</a><a href="/logs" class="active">📋 Logs</a>
+<a href="/models">🤖 AI Models</a><a href="/devices">🌐 Devices</a><a href="/pcap">📁 PCAP</a>
+<a href="/admin">👥 Users</a><a href="/settings">⚙️ Settings</a><a href="/reports">📄 Reports</a>
+<a href="/about">ℹ️ About</a><a href="/" onclick="localStorage.clear()" style="color:var(--red)">🚪 Logout</a>
+</nav></aside>
+<main class="main">
+<h1>📋 Network Logs & Forensic Analytics</h1>
+<small style="color:var(--muted)">Real-time Threat Monitoring</small>
+
+<div class="card">
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:15px">
+<input type="text" id="searchInput" placeholder="🔍 Search IP or attack type..." style="width:250px">
+<select id="filterSeverity"><option value="all">All</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+<button class="btn btn-blue" onclick="loadLogs()">🔍 Search</button>
+<button class="btn btn-outline" onclick="exportCSV()">📥 Export CSV</button>
+<span style="color:var(--muted);margin-left:auto">Total: <b id="totalLogs">0</b></span>
+</div>
+<div style="overflow-x:auto">
+<table><thead><tr><th>ID</th><th>Timestamp</th><th>Source IP</th><th>Dest IP</th><th>Proto</th><th>Port</th><th>Attack Type</th><th>Severity</th><th>Confidence</th><th>Action</th></tr></thead>
+<tbody id="logsTable"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:30px">Start capture to see threats appear here.</td></tr></tbody></table>
+</div>
+</div>
+</main>
+
+<script>
+async function loadLogs(){
+    const severity = document.getElementById('filterSeverity').value
+    const search = document.getElementById('searchInput').value
+    let url = '/api/logs?limit=100&offset=0'
+    if(severity!=='all') url += '&severity='+severity
+    if(search) url += '&search='+encodeURIComponent(search)
+    try{
+        const r = await fetch(url); const d = await r.json()
+        document.getElementById('totalLogs').textContent = d.total
+        document.getElementById('logsTable').innerHTML = d.threats.length ? d.threats.map(t=>`
+            <tr><td>${t.id}</td><td>${(t.timestamp||'').substring(0,19)}</td>
+            <td>${t.src_ip}</td><td>${t.dst_ip||'-'}</td>
+            <td>${t.protocol||'-'}</td><td>${t.src_port||'-'}</td>
+            <td>${t.attack_type}</td>
+            <td class="sev-${t.severity}">${t.severity}</td>
+            <td>${t.confidence?.toFixed(1)||0}%</td>
+            <td>${t.action_taken}</td></tr>
+        `).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:30px">No threats yet. Start capture first.</td></tr>'
+    }catch(e){console.error(e)}
+}
+function exportCSV(){
+    const rows = document.querySelectorAll('#logsTable tr')
+    let csv = 'ID,Timestamp,Source IP,Dest IP,Proto,Port,Attack Type,Severity,Confidence,Action\n'
+    rows.forEach(r=>{
+        const cols = r.querySelectorAll('td')
+        if(cols.length) csv += Array.from(cols).map(c=>c.textContent).join(',')+'\n'
+    })
+    const blob = new Blob([csv],{type:'text/csv'})
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'aegis_logs.csv'; a.click()
+}
+document.addEventListener('DOMContentLoaded',loadLogs)
+setInterval(loadLogs,5000)
+</script>
+</body>
+</html>
+

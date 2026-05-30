@@ -1,0 +1,212 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>AEGIS-ADS | AI Models Live</title>
+<style>
+:root{--bg:#0a0e14;--card:#12171f;--border:#2a3a4a;--text:#e0e0e0;--muted:#9baec8;--blue:#2979ff;--red:#ff5252;--orange:#ff9800;--green:#4caf50;--purple:#7c4dff}
+*{margin:0;padding:0;box-sizing:border-box}body{background:var(--bg);font-family:'Segoe UI',sans-serif;color:var(--text);display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--card);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.sidebar-header{padding:20px;text-align:center;border-bottom:1px solid var(--border)}
+.sidebar-nav a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--muted);text-decoration:none;font-size:13px;border-left:3px solid transparent}
+.sidebar-nav a:hover,.sidebar-nav a.active{background:#1a2230;color:#fff;border-left-color:var(--blue)}
+.main{margin-left:250px;flex:1;padding:20px}
+.pipeline-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px}
+.model-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:25px;text-align:center;position:relative;overflow:hidden}
+.model-card .icon{font-size:45px;margin-bottom:10px}
+.model-card h2{font-size:18px;margin-bottom:5px}
+.model-card .status{font-size:14px;font-weight:bold;margin:10px 0;padding:6px 15px;border-radius:20px;display:inline-block}
+.model-card .status.online{background:rgba(76,175,80,0.2);color:var(--green);border:1px solid var(--green)}
+.model-card .status.processing{background:rgba(255,152,0,0.2);color:var(--orange);border:1px solid var(--orange);animation:pulse 0.8s infinite}
+.model-card .status.idle{background:rgba(158,158,158,0.2);color:var(--muted);border:1px solid var(--muted)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.model-card .bar{height:6px;background:#1a2230;border-radius:3px;margin:15px 0;overflow:hidden}
+.model-card .bar-fill{height:100%;border-radius:3px;transition:width 0.3s}
+.model-card .live-console{background:#0a0e14;border:1px solid var(--border);border-radius:6px;padding:10px;margin-top:15px;max-height:120px;overflow-y:auto;font-family:'Consolas',monospace;font-size:10px;color:var(--muted);text-align:left}
+.live-event{color:var(--green);margin:2px 0}
+.live-event.alert{color:var(--red)}
+.live-event.process{color:var(--orange)}
+.flow-diagram{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;text-align:center}
+.flow-arrow{display:inline-block;padding:10px 20px;background:#1a2230;border-radius:8px;margin:5px;font-size:12px}
+.flow-arrow.active{background:var(--blue);color:#fff}
+.flow-arrow.alert{background:var(--red);color:#fff;animation:pulse 0.5s infinite}
+.stats-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:15px}
+.stats-table th{text-align:left;padding:10px;background:#1a2230;color:var(--muted);font-size:10px;text-transform:uppercase}
+.stats-table td{padding:10px;border-top:1px solid var(--border)}
+</style></head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-header"><h2>🛡️ AEGIS-ADS</h2><span style="color:var(--muted);font-size:10px">v11.0</span></div>
+<nav class="sidebar-nav">
+<a href="/dashboard">📊 Dashboard</a><a href="/firewall">🛡️ Firewall</a><a href="/logs">📋 Logs</a>
+<a href="/models" class="active">🤖 AI Models</a><a href="/devices">🌐 Devices</a><a href="/pcap">📁 PCAP</a>
+<a href="/admin">👥 Users</a><a href="/settings">⚙️ Settings</a><a href="/reports">📄 Reports</a>
+<a href="/about">ℹ️ About</a><a href="/" onclick="localStorage.clear()" style="color:var(--red)">🚪 Logout</a>
+</nav></aside>
+<main class="main">
+<h1>🤖 AI Models - Live Pipeline Status</h1>
+<small style="color:var(--muted)">Real-time inference monitoring</small>
+
+<div class="flow-diagram" style="margin-top:20px">
+<h3 style="color:var(--muted);margin-bottom:15px">📊 Pipeline Flow</h3>
+<div style="display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap">
+<span class="flow-arrow" id="flow1">📡 Packet</span>
+<span style="font-size:20px">→</span>
+<span class="flow-arrow" id="flow2">🔍 L1: RF</span>
+<span style="font-size:20px">→</span>
+<span class="flow-arrow" id="flow3">🧠 L2: XGB</span>
+<span style="font-size:20px">→</span>
+<span class="flow-arrow" id="flow4">⚡ L3: Decision</span>
+</div>
+</div>
+
+<div class="pipeline-row">
+<div class="model-card">
+<div class="icon">🔍</div><h2>T1: Traffic Sentinel</h2>
+<span class="status online" id="l1Status">ONLINE</span>
+<div class="bar"><div class="bar-fill" id="l1Bar" style="width:0%;background:var(--green)"></div></div>
+<div style="color:var(--muted);font-size:11px">Random Forest · 78 features · 100 trees</div>
+<div style="color:var(--green);font-size:12px;margin-top:5px" id="l1Stats">Packets: 0 | Detections: 0</div>
+<div class="live-console" id="l1Console"><div style="color:var(--muted)">Waiting for packets...</div></div>
+</div>
+<div class="model-card">
+<div class="icon">🧠</div><h2>T2: Forensic Investigator</h2>
+<span class="status idle" id="l2Status">IDLE</span>
+<div class="bar"><div class="bar-fill" id="l2Bar" style="width:0%;background:var(--blue)"></div></div>
+<div style="color:var(--muted);font-size:11px">XGBoost · 10 features · 15 classes</div>
+<div style="color:var(--blue);font-size:12px;margin-top:5px" id="l2Stats">Analyses: 0 | Attacks: 0</div>
+<div class="live-console" id="l2Console"><div style="color:var(--muted)">Waiting for L1 trigger...</div></div>
+</div>
+<div class="model-card">
+<div class="icon">⚡</div><h2>T3: Executive AI</h2>
+<span class="status idle" id="l3Status">IDLE</span>
+<div class="bar"><div class="bar-fill" id="l3Bar" style="width:0%;background:var(--purple)"></div></div>
+<div style="color:var(--muted);font-size:11px">Decision Engine · Kernel IPS</div>
+<div style="color:var(--purple);font-size:12px;margin-top:5px" id="l3Stats">Decisions: 0 | Blocks: 0</div>
+<div class="live-console" id="l3Console"><div style="color:var(--muted)">Waiting for L2 result...</div></div>
+</div>
+</div>
+
+<div class="card">
+<h3 style="color:var(--muted);margin-bottom:10px">📊 Model Performance Metrics (Live)</h3>
+<table class="stats-table"><thead><tr><th>Model</th><th>Status</th><th>Packets</th><th>Detections</th><th>Avg Confidence</th><th>Last Inference</th></tr></thead>
+<tbody>
+<tr><td>Random Forest (L1)</td><td><span class="status online" style="font-size:10px">ONLINE</span></td><td id="rfPkts">0</td><td id="rfDet">0</td><td id="rfConf">-</td><td id="rfLast">-</td></tr>
+<tr><td>XGBoost (L2)</td><td><span class="status idle" style="font-size:10px">IDLE</span></td><td id="xgbPkts">0</td><td id="xgbDet">0</td><td id="xgbConf">-</td><td id="xgbLast">-</td></tr>
+<tr><td>Kernel IPS (L3)</td><td><span class="status online" style="font-size:10px">ACTIVE</span></td><td id="ipsPkts">0</td><td id="ipsBlocks">0</td><td>-</td><td id="ipsLast">-</td></tr>
+</tbody></table>
+</div>
+</main>
+
+<script>
+let ws;
+let l1Count=0,l2Count=0,l3Count=0;
+
+function connectWS(){
+    ws = new WebSocket(`ws://${location.host}/ws/live`);
+    ws.onmessage = (e) => {
+        const d = JSON.parse(e.data);
+        updateLiveData(d);
+    };
+    ws.onclose = () => setTimeout(connectWS, 3000);
+}
+
+function updateLiveData(d){
+    const packets = d.packets || 0;
+    const detections = d.detections || 0;
+    
+    // L1 always processing
+    document.getElementById('l1Status').textContent = 'PROCESSING';
+    document.getElementById('l1Status').className = 'status processing';
+    document.getElementById('l1Bar').style.width = Math.min(100, (packets % 100)) + '%';
+    document.getElementById('l1Stats').textContent = `Packets: ${packets} | Detections: ${detections}`;
+    
+    // Update console
+    if (packets > l1Count) {
+        l1Count = packets;
+        const console = document.getElementById('l1Console');
+        console.innerHTML = `<div class="live-event process">[L1] Packet #${packets} → RF analyzing...</div>` + console.innerHTML;
+        if (console.children.length > 3) console.removeChild(console.lastChild);
+        
+        document.getElementById('flow1').className = 'flow-arrow active';
+        document.getElementById('flow2').className = 'flow-arrow active';
+        setTimeout(()=>{document.getElementById('flow1').className='flow-arrow';document.getElementById('flow2').className='flow-arrow'},500);
+        
+        document.getElementById('rfPkts').textContent = packets;
+        document.getElementById('rfLast').textContent = new Date().toLocaleTimeString();
+    }
+    
+    // L2 processes when detections increase
+    if (detections > l2Count) {
+        l2Count = detections;
+        document.getElementById('l2Status').textContent = 'INVESTIGATING';
+        document.getElementById('l2Status').className = 'status processing';
+        document.getElementById('l2Bar').style.width = '85%';
+        
+        const console = document.getElementById('l2Console');
+        const attack = (d.alerts && d.alerts.length > 0) ? d.alerts[d.alerts.length-1].attack : 'Unknown';
+        const src = (d.alerts && d.alerts.length > 0) ? d.alerts[d.alerts.length-1].src : '?';
+        console.innerHTML = `<div class="live-event alert">[L2] ${attack} from ${src} → XGBoost classifying...</div>` + console.innerHTML;
+        if (console.children.length > 3) console.removeChild(console.lastChild);
+        
+        document.getElementById('flow3').className = 'flow-arrow active';
+        setTimeout(()=>{document.getElementById('flow3').className='flow-arrow'},500);
+        
+        document.getElementById('xgbPkts').textContent = detections;
+        document.getElementById('xgbDet').textContent = detections;
+        document.getElementById('xgbLast').textContent = new Date().toLocaleTimeString();
+        
+        setTimeout(()=>{
+            document.getElementById('l2Status').textContent = 'ONLINE';
+            document.getElementById('l2Status').className = 'status online';
+            document.getElementById('l2Bar').style.width = '100%';
+        }, 2000);
+    }
+    
+    // Update L3 with alerts
+    if (d.alerts && d.alerts.length > 0) {
+        document.getElementById('l3Status').textContent = 'DECIDING';
+        document.getElementById('l3Status').className = 'status processing';
+        document.getElementById('l3Bar').style.width = '90%';
+        
+        const lastAlert = d.alerts[d.alerts.length-1];
+        const console = document.getElementById('l3Console');
+        const action = lastAlert.action || 'Blocked';
+        const kernel = lastAlert.kernel ? 'Kernel' : 'Firewall';
+        console.innerHTML = `<div class="live-event alert">[L3] Decision: ${action} via ${kernel}</div>` + console.innerHTML;
+        if (console.children.length > 3) console.removeChild(console.lastChild);
+        
+        document.getElementById('flow4').className = 'flow-arrow alert';
+        setTimeout(()=>{document.getElementById('flow4').className='flow-arrow'},800);
+        
+        document.getElementById('ipsBlocks').textContent = detections;
+        document.getElementById('ipsLast').textContent = new Date().toLocaleTimeString();
+        
+        setTimeout(()=>{
+            document.getElementById('l3Status').textContent = 'ONLINE';
+            document.getElementById('l3Status').className = 'status online';
+            document.getElementById('l3Bar').style.width = '100%';
+        }, 2000);
+    }
+    
+    document.getElementById('l1Status').textContent = 'ONLINE';
+    document.getElementById('l1Status').className = 'status online';
+    document.getElementById('l1Bar').style.width = '100%';
+}
+
+document.addEventListener('DOMContentLoaded', connectWS);
+
+// Also fetch stats periodically
+setInterval(async () => {
+    try {
+        const r = await fetch('/api/dashboard/stats');
+        if (r.ok) {
+            const s = await r.json();
+            document.getElementById('rfPkts').textContent = s.packets || 0;
+            document.getElementById('ipsBlocks').textContent = s.blocked_ips || 0;
+        }
+    } catch(e) {}
+}, 5000);
+</script>
+</body>
+</html>
+
+

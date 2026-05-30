@@ -1,0 +1,308 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AEGIS-ADS | Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --bg: #0a0e14;
+            --card: #12171f;
+            --border: #2a3a4a;
+            --text: #e0e0e0;
+            --muted: #9baec8;
+            --blue: #2979ff;
+            --red: #ff5252;
+            --orange: #ff9800;
+            --green: #4caf50;
+            --purple: #7c4dff
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box }
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--text);
+            display: flex;
+            min-height: 100vh
+        }
+        .sidebar {
+            width: 250px;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto
+        }
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border)
+        }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 20px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 13px;
+            border-left: 3px solid transparent
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background: #1a2230;
+            color: #fff;
+            border-left-color: var(--blue)
+        }
+        .main {
+            margin-left: 250px;
+            flex: 1;
+            padding: 20px
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center
+        }
+        .stat-card .val {
+            font-size: 36px;
+            font-weight: 700
+        }
+        .stat-card .lbl {
+            color: var(--muted);
+            font-size: 10px;
+            text-transform: uppercase;
+            margin-top: 5px;
+            letter-spacing: 1px
+        }
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px
+        }
+        .chart-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px
+        }
+        .chart-box h3 {
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 10px
+        }
+        .sysbar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--muted)
+        }
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            margin-bottom: 20px
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1 }
+            50% { opacity: 0.3 }
+        }
+        .kernel-badge {
+            background: rgba(124, 77, 255, 0.2);
+            color: var(--purple);
+            border: 1px solid var(--purple);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-left: 10px
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>🛡️ AEGIS-ADS</h2>
+            <span style="color:var(--muted);font-size:10px">X-Sentry AI v11.0</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="active">📊 Dashboard</a>
+            <a href="/firewall">🛡️ Firewall</a>
+            <a href="/logs">📋 Logs</a>
+            <a href="/models">🤖 AI Models</a>
+            <a href="/devices">🌐 Devices</a>
+            <a href="/admin">👥 Users</a>
+            <a href="/settings">⚙️ Settings</a>
+            <a href="/reports">📄 Reports</a>
+            <a href="/about">ℹ️ About</a>
+            <a href="/" onclick="localStorage.clear()" style="color:var(--red)">🚪 Logout</a>
+        </nav>
+    </aside>
+    <main class="main">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h1>Security Operations Center</h1>
+            <div style="display:flex;align-items:center;gap:10px">
+                <span class="kernel-badge">⚡ KERNEL IPS</span>
+                <div class="live-badge">
+                    <span class="live-dot"></span>LIVE · <span id="pktCount">0</span> packets
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="val" style="color:var(--red)" id="threats">0</div>
+                <div class="lbl">Active Threats</div>
+            </div>
+            <div class="stat-card">
+                <div class="val" style="color:var(--blue)" id="bw">0</div>
+                <div class="lbl">Active Flows</div>
+            </div>
+            <div class="stat-card">
+                <div class="val" style="color:var(--orange)" id="blocked">0</div>
+                <div class="lbl">Blocked IPs</div>
+            </div>
+            <div class="stat-card">
+                <div class="val" style="color:var(--green)" id="rules">0</div>
+                <div class="lbl">Active Rules</div>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-box">
+                <h3>🥧 Attacks by Type</h3>
+                <div id="pieChart"></div>
+            </div>
+            <div class="chart-box">
+                <h3>📈 Attack Timeline</h3>
+                <div id="lineChart"></div>
+            </div>
+        </div>
+
+        <div class="sysbar">
+            <span>🛡️ KERNEL IPS: <b style="color:var(--purple);">ACTIVE</b></span>
+            <span>CPU: <b id="cpuVal">-</b>%</span>
+            <span>FLOWS: <b id="flowCount">0</b></span>
+            <span>THREATS: <b id="threatTotal">0</b></span>
+            <span id="timeVal">--:--:--</span>
+        </div>
+    </main>
+
+    <script>
+        let pieChart, lineChart, ws;
+
+        function initCharts() {
+            // المخطط الدائري – يبدأ فارغاً
+            pieChart = new ApexCharts(document.querySelector("#pieChart"), {
+                series: [],
+                chart: {
+                    type: 'donut',
+                    height: 300,
+                    background: '#12171f',
+                    foreColor: '#9baec8'
+                },
+                labels: [],
+                colors: ['#ff5252', '#ff9800', '#ffeb3b', '#2196f3', '#9c27b0', '#4caf50', '#00bcd4', '#e91e63'],
+                stroke: { width: 2, colors: ['#12171f'] },
+                legend: {
+                    position: 'bottom',
+                    labels: { colors: '#9baec8' }
+                }
+            });
+            pieChart.render();
+
+            // المخطط الزمني – يبدأ فارغاً
+            lineChart = new ApexCharts(document.querySelector("#lineChart"), {
+                series: [{ name: 'Attacks', data: Array(24).fill(0) }],
+                chart: {
+                    type: 'area',
+                    height: 300,
+                    background: '#12171f',
+                    foreColor: '#9baec8'
+                },
+                stroke: { curve: 'smooth', width: 2, colors: ['#ff5252'] },
+                fill: {
+                    type: 'gradient',
+                    gradient: { shade: 'dark', opacityFrom: 0.3, opacityTo: 0.05 }
+                },
+                xaxis: {
+                    categories: Array(24).fill('--:--'),
+                    labels: { style: { colors: '#9baec8' } }
+                },
+                grid: { borderColor: '#2a3a4a' }
+            });
+            lineChart.render();
+        }
+
+        function connectWS() {
+            ws = new WebSocket(`ws://${location.host}/ws/live`);
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+
+                // تحديث الأرقام العلوية
+                document.getElementById('pktCount').textContent = (d.packets || 0).toLocaleString();
+                document.getElementById('threats').textContent = (d.detections || 0).toLocaleString();
+                document.getElementById('blocked').textContent = (d.blocked_ips || 0).toLocaleString();
+                document.getElementById('flowCount').textContent = (d.flows || 0).toLocaleString();
+                document.getElementById('threatTotal').textContent = (d.detections || 0).toLocaleString();
+                document.getElementById('cpuVal').textContent = (d.cpu || '?') + '%';
+
+                // تحديث المخطط الدائري
+                if (d.attack_distribution) {
+                    const labels = Object.keys(d.attack_distribution);
+                    const series = Object.values(d.attack_distribution);
+                    pieChart.updateOptions({
+                        labels: labels,
+                        series: series
+                    });
+                }
+
+                // تحديث المخطط الزمني
+                if (d.timeline_labels && d.timeline_data) {
+                    lineChart.updateOptions({
+                        xaxis: { categories: d.timeline_labels },
+                        series: [{ name: 'Attacks', data: d.timeline_data }]
+                    });
+                }
+            };
+            ws.onclose = () => setTimeout(connectWS, 3000);
+        }
+
+        setInterval(() => {
+            document.getElementById('timeVal').textContent = new Date().toLocaleTimeString();
+        }, 1000);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            connectWS();
+        });
+    </script>
+</body>
+</html>

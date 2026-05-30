@@ -1,0 +1,713 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS-ADS | الإعدادات</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a2a 0%, #1a1a3a 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* ============================================================ */
+        /* Sidebar */
+        /* ============================================================ */
+        .sidebar {
+            width: 280px;
+            background: rgba(10, 10, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(100, 100, 200, 0.3);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(100, 100, 200, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .logo h1 {
+            font-size: 26px;
+            background: linear-gradient(90deg, #00d4ff, #7c4dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .logo p {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .nav-menu {
+            list-style: none;
+            padding: 0 15px;
+        }
+        
+        .nav-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .nav-menu li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #ccc;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+            gap: 12px;
+        }
+        
+        .nav-menu li a:hover {
+            background: rgba(100, 100, 200, 0.2);
+            color: #fff;
+        }
+        
+        .nav-menu li.active a {
+            background: linear-gradient(90deg, #00d4ff, #7c4dff);
+            color: #fff;
+        }
+        
+        /* ============================================================ */
+        /* Main Content */
+        /* ============================================================ */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 30px;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+            background: linear-gradient(90deg, #00d4ff, #7c4dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .page-header p {
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        /* Cards */
+        .card {
+            background: rgba(20, 20, 50, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(100, 100, 200, 0.2);
+        }
+        
+        .card h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: #00d4ff;
+            border-bottom: 1px solid rgba(100, 100, 200, 0.3);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(100, 100, 200, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #00d4ff, #7c4dff);
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(90deg, #00c853, #69f0ae);
+            color: #1a1a2e;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(90deg, #d50000, #ff5722);
+            color: #fff;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(90deg, #ff9800, #ffc107);
+            color: #1a1a2e;
+        }
+        
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(100, 100, 200, 0.2);
+        }
+        
+        .data-table th {
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+        }
+        
+        .data-table tr:hover {
+            background: rgba(100, 100, 200, 0.1);
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+        
+        .badge-success {
+            background: rgba(0, 200, 83, 0.2);
+            color: #69f0ae;
+            border: 1px solid #00c853;
+        }
+        
+        .badge-warning {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+            border: 1px solid #ff9800;
+        }
+        
+        /* Actions */
+        .action-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            margin: 0 3px;
+        }
+        
+        .action-btn.delete {
+            color: #f44336;
+        }
+        
+        .action-btn.delete:hover {
+            color: #ff5722;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: bold;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            background: linear-gradient(90deg, #00c853, #69f0ae);
+        }
+        
+        .notification.error {
+            background: linear-gradient(90deg, #d50000, #ff5722);
+        }
+        
+        .notification.info {
+            background: linear-gradient(90deg, #00d4ff, #7c4dff);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .status-online {
+            background: rgba(0, 200, 83, 0.2);
+            color: #69f0ae;
+            border: 1px solid #00c853;
+        }
+        
+        .status-offline {
+            background: rgba(213, 0, 0, 0.2);
+            color: #ff5722;
+            border: 1px solid #d50000;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+            .sidebar .logo h1, .sidebar .logo p, .nav-menu li a span {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>AEGIS-ADS</h1>
+                <p>v11.0</p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/dashboard">📊 Dashboard</a></li>
+                <li><a href="/firewall">🔥 Firewall</a></li>
+                <li><a href="/logs">📜 Logs</a></li>
+                <li><a href="/models">🤖 AI Models</a></li>
+                <li><a href="/devices">📱 Devices</a></li>
+                <li><a href="/pcap">📦 PCAP</a></li>
+                <li><a href="/users">👥 Users</a></li>
+                <li class="active"><a href="/settings">⚙️ Settings</a></li>
+                <li><a href="/reports">📄 Reports</a></li>
+                <li><a href="/about">ℹ️ About</a></li>
+                <li><a href="/logout">🚪 Logout</a></li>
+            <li><a href="/whitelist">✅ Whitelist</a></li>`n        </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h1>⚙️ System Settings</h1>
+                <p>Configure system parameters and email alerts</p>
+            </div>
+            
+            <!-- Email Configuration Card -->
+            <div class="card">
+                <h2>📧 Email Alert Configuration</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>SMTP Server</label>
+                        <input type="text" id="smtpServer" placeholder="smtp.gmail.com" value="smtp.gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label>SMTP Port</label>
+                        <input type="number" id="smtpPort" placeholder="587" value="587">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Username (Email Address)</label>
+                    <input type="email" id="smtpUsername" placeholder="your-email@gmail.com" value="alaxhmood@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>App Password</label>
+                    <input type="password" id="smtpPassword" placeholder="App Password" value="safh xamu psgh rqgb">
+                </div>
+                <div class="form-group">
+                    <label>Primary Alert Email</label>
+                    <input type="email" id="alertEmail" placeholder="alert@example.com" value="alaxhmood@gmail.com">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Additional Email (Optional)</label>
+                        <input type="email" id="additionalEmail" placeholder="another@example.com">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="addAdditionalEmail()" style="width: 100%;">➕ Add Email</button>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="saveEmailSettings()">💾 Save Email Settings</button>
+                    <button class="btn btn-success" onclick="testEmail()">📧 Send Test Email</button>
+                </div>
+            </div>
+            
+            <!-- Registered Emails Card -->
+            <div class="card">
+                <h2>📬 Registered Alert Emails</h2>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="emailsTable">
+                        <thead>
+                            <tr>
+                                <th>Email Address</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emailsList">
+                            <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button class="btn btn-warning" onclick="refreshEmails()">🔄 Refresh Email List</button>
+                </div>
+            </div>
+            
+            <!-- System Status Card -->
+            <div class="card">
+                <h2>🖥️ System Status</h2>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div>
+                        <strong>API Status:</strong>
+                        <span id="apiStatus" class="status-badge status-online">● Online</span>
+                    </div>
+                    <div>
+                        <strong>Models Status:</strong>
+                        <span id="modelsStatus" class="status-badge status-online">● Loaded</span>
+                    </div>
+                    <div>
+                        <strong>Capture Status:</strong>
+                        <span id="captureStatus" class="status-badge status-offline">○ Stopped</span>
+                    </div>
+                    <div>
+                        <strong>Email Service:</strong>
+                        <span id="emailStatus" class="status-badge status-online">● Configured</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Alerts Card -->
+            <div class="card">
+                <h2>📋 Recent Email Alerts</h2>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="alertsTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Attack Type</th>
+                                <th>Source IP</th>
+                                <th>Action</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alertsList">
+                            <tr><td colspan="5" style="text-align: center;">No alerts yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let ws = null;
+        
+        function showNotification(message, type) {
+            const notification = document.createElement("div");
+            notification.className = `notification ${type}`;
+            notification.innerHTML = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+        
+        // WebSocket connection
+        function connectWebSocket() {
+            ws = new WebSocket(`ws://${window.location.host}/ws/live`);
+            ws.onopen = () => console.log("WebSocket connected");
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    updateStatus(data);
+                    updateAlertsList(data.alerts);
+                } catch(e) { console.error(e); }
+            };
+            ws.onclose = () => setTimeout(connectWebSocket, 3000);
+        }
+        
+        function updateStatus(data) {
+            const captureStatus = document.getElementById("captureStatus");
+            if(captureStatus) {
+                if(data.capture) {
+                    captureStatus.innerHTML = "● Running";
+                    captureStatus.className = "status-badge status-online";
+                } else {
+                    captureStatus.innerHTML = "○ Stopped";
+                    captureStatus.className = "status-badge status-offline";
+                }
+            }
+        }
+        
+        function updateAlertsList(alerts) {
+            const tbody = document.getElementById("alertsList");
+            if(!tbody) return;
+            if(!alerts || alerts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No alerts yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = alerts.slice(0, 10).map(alert => `
+                <tr>
+                    <td>${alert.time ? alert.time.slice(0,19).replace('T', ' ') : '--:--:--'}</td>
+                    <td><span style="color:#f44336;">${alert.attack || 'Unknown'}</span></td>
+                    <td>${alert.src || '?'}</td>
+                    <td><span style="color:#4caf50;">${alert.action || 'Logged'}</span></td>
+                    <td>✅ Sent</span></td>
+                </tr>
+            `).join("");
+        }
+        
+        // Email functions
+        async function saveEmailSettings() {
+            const smtpServer = document.getElementById("smtpServer").value;
+            const smtpPort = document.getElementById("smtpPort").value;
+            const username = document.getElementById("smtpUsername").value;
+            const password = document.getElementById("smtpPassword").value;
+            const alertEmail = document.getElementById("alertEmail").value;
+            
+            try {
+                const response = await fetch("/api/settings/email/save", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ smtp_server: smtpServer, smtp_port: parseInt(smtpPort), username: username, password: password, alert_email: alertEmail })
+                });
+                const result = await response.json();
+                if(result.status === "saved") {
+                    showNotification("✅ Email settings saved successfully!", "success");
+                    refreshEmails();
+                } else {
+                    showNotification("❌ Failed to save settings", "error");
+                }
+            } catch(e) {
+                showNotification("Error: " + e.message, "error");
+            }
+        }
+        
+        async function testEmail() {
+            showNotification("📧 Sending test email...", "info");
+            try {
+                const response = await fetch("/api/settings/email/test", { method: "POST" });
+                const result = await response.json();
+                if(result.status === "sent") {
+                    showNotification("✅ Test email sent successfully!", "success");
+                } else {
+                    showNotification("❌ Failed to send test email", "error");
+                }
+            } catch(e) {
+                showNotification("Error: " + e.message, "error");
+            }
+        }
+        
+        async function addAdditionalEmail() {
+            const email = document.getElementById("additionalEmail").value;
+            if(!email) {
+                showNotification("Please enter an email address", "error");
+                return;
+            }
+            try {
+                const response = await fetch("/api/settings/email/add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email })
+                });
+                const result = await response.json();
+                if(result.status === "added") {
+                    showNotification(`✅ ${email} added to alert list`, "success");
+                    document.getElementById("additionalEmail").value = "";
+                    refreshEmails();
+                } else {
+                    showNotification("Email already exists", "error");
+                }
+            } catch(e) {
+                showNotification("Error: " + e.message, "error");
+            }
+        }
+        
+        async function refreshEmails() {
+            try {
+                const response = await fetch("/api/settings/email/get");
+                const data = await response.json();
+                const tbody = document.getElementById("emailsList");
+                
+                let emails = [data.alert_email];
+                if(data.additional_emails) {
+                    emails = [...emails, ...data.additional_emails];
+                }
+                
+                if(emails.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No emails configured</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = emails.map(email => `
+                    <tr>
+                        <td><strong>${email}</strong></td>
+                        <td>${email === data.alert_email ? 'Primary' : 'Additional'}</td>
+                        <td><span class="badge badge-success">● Active</span></td>
+                        <td>
+                            ${email !== data.alert_email ? `<button class="action-btn delete" onclick="removeEmail('${email}')">🗑️</button>` : '-'}
+                        </td>
+                    </tr>
+                `).join("");
+            } catch(e) {
+                console.error(e);
+            }
+        }
+        
+        async function removeEmail(email) {
+            if(!confirm(`Remove ${email} from alert list?`)) return;
+            try {
+                const response = await fetch("/api/settings/email/remove", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email })
+                });
+                const result = await response.json();
+                if(result.status === "removed") {
+                    showNotification(`✅ ${email} removed`, "success");
+                    refreshEmails();
+                }
+            } catch(e) {
+                showNotification("Error: " + e.message, "error");
+            }
+        }
+        
+        async function loadModelsStatus() {
+            try {
+                const response = await fetch("/api/models/status");
+                const data = await response.json();
+                const modelsStatus = document.getElementById("modelsStatus");
+                if(data.rf_model && data.xgb_model) {
+                    modelsStatus.innerHTML = "● Loaded";
+                    modelsStatus.className = "status-badge status-online";
+                } else {
+                    modelsStatus.innerHTML = "○ Missing";
+                    modelsStatus.className = "status-badge status-offline";
+                }
+            } catch(e) {}
+        }
+        
+        // Initialize
+        connectWebSocket();
+        refreshEmails();
+        loadModelsStatus();
+        setInterval(refreshEmails, 30000);
+        setInterval(loadModelsStatus, 10000);
+    </script>
+<div class="card">
+    <h2>🛡️ Blocking Mode</h2>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <span>Enable automatic blocking of attackers (based on AI models)</span>
+        <label class="toggle-switch">
+            <input type="checkbox" id="blockingToggle" onchange="toggleBlocking()">
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+    <div id="blockingStatus" style="margin-top: 10px; font-size: 12px; color: #aaa;"></div>
+</div>
+
+<script>
+    async function loadBlockingStatus() {
+        const res = await fetch('/api/settings/blocking');
+        const data = await res.json();
+        document.getElementById('blockingToggle').checked = data.enabled;
+        document.getElementById('blockingStatus').innerHTML = data.enabled ? 
+            '⚠️ Blocking mode is ACTIVE. Attackers will be blocked.' : 
+            '👁️ Monitor mode only. No blocking will occur.';
+    }
+    
+    async function toggleBlocking() {
+        const enabled = document.getElementById('blockingToggle').checked;
+        const res = await fetch('/api/settings/blocking', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({enabled: enabled})
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showNotification(`Blocking mode ${enabled ? 'enabled' : 'disabled'}`, 'success');
+            loadBlockingStatus();
+        }
+    }
+    
+    loadBlockingStatus();
+</script>
+</body>
+</html>
+
+
