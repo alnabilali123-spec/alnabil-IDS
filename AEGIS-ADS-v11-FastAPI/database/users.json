@@ -1,0 +1,20 @@
+{
+  "admin": {
+    "password": "a20a2b7bb0842d5cf8a0c06c626421fd51ec103925c1819a51271f2779afa730",
+    "role": "admin",
+    "email": "alaxhmood@gmail.com",
+    "created": "2026-05-11 22:29:53.926788"
+  },
+  "analyst": {
+    "password": "20249749412d73a3f5799f6f1dcf910e7b4aa3ce4de133b1f8a63c044792a4e9",
+    "role": "analyst",
+    "email": "analyst@aegis.local",
+    "created": "2026-05-11 22:29:53.926816"
+  },
+  "viewer": {
+    "password": "65375049b9e4d7cad6c9ba286fdeb9394b28135a3e84136404cfccfdcc438894",
+    "role": "viewer",
+    "email": "viewer@aegis.local",
+    "created": "2026-05-11 22:29:53.926823"
+  }
+}
